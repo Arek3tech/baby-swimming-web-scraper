@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-base = "https://shop.fresch-freising.de"
+base = "https://www.copart.com/pl/"
 courses_url = base + "/courses/5"
 
 # get website contents and parse html
