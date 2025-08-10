@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-base = "https://www.copart.com/pl/"
+base = 'https://www.copart.com/lotSearchResults/?free=true&query=car'
 courses_url = base + "/courses/5"
 
 # get website contents and parse html
