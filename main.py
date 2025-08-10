@@ -1,35 +1,54 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
-import re
+import time
 
-base = 'https://www.copart.com/lotSearchResults/?free=true&query=car'
-courses_url = base + "/courses/5"
-
-# get website contents and parse html
-response = requests.get(courses_url)
-html = BeautifulSoup(response.text, 'html.parser')
-
-categories_html = html.find('section', {"id" : "Categories"})
-courses_html = categories_html.findChildren("div", id=re.compile('^Course-'))
-
-# create markdown string of courses
-courses_markdown = "# Babyschwimmen Kursübersicht"
-for c in courses_html:
-    # parse information
-    headline = c.find('h5', {"class" : "card-title"}).text
-    text = c.find('p').text
-    url = base + c.find('a' ,href=True)['href']
+def scrapuj_copart_selenium(url):
+    # Opcje uruchomienia przeglądarki w tle (headless)
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
     
-    # Strip whitespaces
-    headline_stripped = re.sub(' +', ' ', headline).strip()
-    text_stripped = re.sub(' +', ' ', text).strip()
+    # Inicjalizacja sterownika Chrome (upewnij się, że masz chromedriver)
+    driver = webdriver.Chrome(options=options)
     
-    # append to markdown
-    courses_markdown += """
-## {}
-[{}]({})
-""".format(headline_stripped, text_stripped, url)
-      
-# write markdown file
-with open("courses.md", "w") as courses_file:
-    courses_file.write(courses_markdown)
+    try:
+        print(f"Ładuje stronę: {url}")
+        driver.get(url)
+
+        # Poczekaj kilka sekund na załadowanie treści dynamicznej przez JavaScript
+        time.sleep(5)
+
+        # Pobierz źródło strony po załadowaniu JS
+        html = driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+
+        # Znajdź wszystkie elementy aukcji - divy z klasą 'search-results-row'
+        auta = soup.find_all('div', class_='search-results-row')
+
+        wyniki = []
+        for auto in auta:
+            tytul_elem = auto.find('span', class_='lot-desc')
+            tytul = tytul_elem.text.strip() if tytul_elem else 'Brak tytułu'
+
+            cena_elem = auto.find('span', class_='currentBid') or auto.find('span', class_='auctionPrice')
+            cena = cena_elem.text.strip() if cena_elem else 'Brak ceny'
+
+            wyniki.append({'tytul': tytul, 'cena': cena})
+
+        print("Znalezione aukcje:")
+        for samochod in wyniki:
+            print(f"Aukcja: {samochod['tytul']}, Cena: {samochod['cena']}")
+        
+        return wyniki
+
+    finally:
+        driver.quit()
+
+
+if __name__ == "__main__":
+    # Przykładowy URL wyszukiwania aut na Copart
+    url = 'https://www.copart.com/lotSearchResults/?free=true&query=car'
+    scrapuj_copart_selenium(url)
