@@ -52,7 +52,9 @@ def scrapuj_copart_selenium(url):
         driver.quit()
 
 
-if __name__ == "__main__":
-    # Przykładowy URL wyników aukcji na Copart
-    url = 'https://www.copart.com/lotSearchResults/?free=true&query=car'
-    scrapuj_copart_selenium(url)
+- name: Install dependencies
+  run: |
+    python -m pip install --upgrade pip
+    pip install selenium webdriver-manager beautifulsoup4
+
+
